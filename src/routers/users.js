@@ -31,6 +31,30 @@ router.post('/users/login', async (req, res) => {
     }
 });
 
+router.post('/users/logout', auth, async (req, res) => {
+    try {
+        //Only logging out from the requested device in case user is logged in from multiple devices
+        req.user.tokens = req.user.tokens.filter((token) => token.token !== req.token);
+        await req.user.save();
+
+        res.send();
+    } catch (error) {
+        res.status(500).send();
+    }
+});
+
+router.post('/users/logoutAll', auth, async (req, res) => {
+    try {
+        //Only logging out from the requested device in case user is logged in from multiple devices
+        req.user.tokens = [];
+        await req.user.save();
+
+        res.send();
+    } catch (error) {
+        res.status(500).send();
+    }
+});
+
 router.get('/users/me', auth, async (req, res) => {
     res.send(req.user);     //The auth middleware sets the user in the request
 });
