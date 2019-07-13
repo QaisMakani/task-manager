@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -10,6 +11,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
+        unique: true,
         require: true,
         trim: true,
         validate(value) {
@@ -37,11 +39,41 @@ const userSchema = new mongoose.Schema({
                 throw new Error('Age is invalid');
             }
         }
-    }
+    },
+    tokens: [
+        {
+            token: {
+                type: String,
+                required: true
+            }
+        }
+    ]
 });
 
+userSchema.statics.findByCredentials = async (email, password) => {
+    const user = await User.findOne({email});
+    if(!user) {
+        throw new Error('Unable to Login!');
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if(!isMatch) {
+        throw new Error('Unable to Login!');
+    }
+
+    return user;
+};
+
+userSchema.methods.generateAuthToken = async function generateAuthToken() {
+    const token = jwt.sign({_id: this._id.toString()}, 'thisismynewcourse');
+
+    this.tokens = this.tokens.concat({token});
+    await this.save();
+
+    return token;
+}
 
 /*
+ * Hashing the password on user before saving
  * Setting up mongoose middleware on schema
  * Normal function to be used here since we need 'this' binding
  * 'this' refers to the model on which the operation is being performed. In this case user.
