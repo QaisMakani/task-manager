@@ -17,9 +17,18 @@ router.post('/tasks', auth, async (req, res) => {
     }
 });
 
+
+// GET /tasks?completed=true
 router.get('/tasks', auth, async (req, res) => {
+    const match = {};
+    if(req.query.completed) {
+        match.completed = req.query.completed === 'true';
+    }
     try {
-        await req.user.populate('tasks').execPopulate();
+        await req.user.populate({
+            path: 'tasks',
+            match
+        }).execPopulate();
         res.status(200).send(req.user.tasks);
     } catch (error) {
         res.status(500).send(error);
@@ -40,7 +49,6 @@ router.get('/tasks/:id', async (req, res) => {
 });
 
 router.patch('/tasks/:id', async (req, res) => {
-    const _id = req.params.id;
     const updates = Object.keys(req.body);
     const allowedUpdates = ['description', 'completed'];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
