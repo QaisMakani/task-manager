@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Task = require('./task.js');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -98,6 +99,12 @@ userSchema.pre('save', async function callback(next) {
         this.password = await bcrypt.hash(this.password, 8);        //8 is the number of rounds of hashing performed. Recommended by the creator of the algorithm.
     }
     next();     //Need to call this explicitly to tell mongoose to proceed with save
+});
+
+//Delete User Tasks when User is Removed
+userSchema.pre('remove', async function remove(next) {
+    await Task.deleteMany({owner: this._id});
+    next();
 });
 
 const User = mongoose.model('User', userSchema);
