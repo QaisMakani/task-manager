@@ -57,7 +57,7 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     }
 });
 
-router.get('/users/me', auth, async (req, res) => {
+router.get('/users/me', auth, (req, res) => {
     res.send(req.user);     //The auth middleware sets the user in the request
 });
 
@@ -119,7 +119,10 @@ const upload = multer({
 router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
     //The file is provided in req by multer middleware when no dest is provided in options
     const buffer = await sharp(req.file.buffer).
-    resize({width: 250, height: 250}).
+    resize({
+        width: 250,
+        height: 250
+    }).
     png().
     toBuffer();
     req.user.avatar = buffer;
